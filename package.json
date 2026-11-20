@@ -1,0 +1,7 @@
+{
+  "name": "design-system-extract-skill",
+  "private": true,
+  "type": "module",
+  "description": "Scripts for extracting a live web app's design system into a Doop canvas",
+  "dependencies": { "playwright-core": "^1.48.0" }
+}

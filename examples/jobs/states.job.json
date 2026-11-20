@@ -1,0 +1,11 @@
+{
+  "frames": ["home", "settings_general", "thread_rest"],
+  "maxHtml": 20000,
+  "workers": 6,
+  "targets": [
+    { "key": "button", "sel": "button, [role=button]", "mode": "class", "maxW": 700, "maxH": 220, "cap": 60 },
+    { "key": "link", "sel": "a[href]", "mode": "class", "maxW": 700, "maxH": 220, "cap": 40 },
+    { "key": "field", "sel": "input, textarea, select, [contenteditable=true]", "mode": "class", "maxW": 900, "maxH": 260, "cap": 30 },
+    { "key": "choice", "sel": "[role=tab], [role=menuitem], [role=option], [role=switch], [role=checkbox], [role=radio], [role=row]", "mode": "class", "maxW": 900, "maxH": 220, "cap": 60 }
+  ]
+}

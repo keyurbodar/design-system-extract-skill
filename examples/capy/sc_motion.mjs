@@ -1,0 +1,96 @@
+const L = (p, sel) => p.locator(sel).first();
+const hov = (sel) => async (p) => { const l = L(p, sel); await l.hover(); return l; };
+const clk = (sel) => async (p) => { const l = L(p, sel); await l.click(); return l; };
+const rcl = (sel) => async (p) => { const l = L(p, sel); await l.click({ button: 'right' }); return l; };
+const key = (k) => async (p) => { await p.keyboard.press(k); return null; };
+const ab = (l) => `button[aria-label="${l}"]`;
+const USER = 'button:has-text("WORKSPACE NAME"), button[aria-label="WORKSPACE NAME"]';
+const goThread = async (p) => { const h = await p.evaluate(() => document.querySelector('a[href^="/thread/"]')?.getAttribute('href')); await p.goto(process.env.DSX_BASE_URL + h, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(6500); };
+const chat = '[data-thread-chat]';
+const S = (key, group, name, how, trigger, extra = {}) => ({ key: 'm_' + key, group, name, how, trigger, ...extra });
+const T = (key, name, how, trigger, extra = {}) => S(key, 'Thread', name, how, trigger, { setup: goThread, ...extra });
+const withSetup = (pre, trig) => ({ setup: pre, trigger: trig });
+export default [
+  // Sidebar
+  S('sb_thread_hover', 'Sidebar', 'Thread row hover', 'pointer enters a thread row', hov('a[href^="/thread/"]:not([data-captain-row] a)')),
+  S('sb_captain_row_hover', 'Sidebar', 'Captain row hover and preview card', 'pointer rests on a captain row', async (p) => { const l = p.getByText('CAPTAIN ROW NAME', { exact: true }).first(); await l.hover(); return l; }, { wait: 900 }),
+  S('sb_pinned_hover', 'Sidebar', 'Pinned captain tile hover', 'pointer enters a pinned tile', hov('[data-captain-row]')),
+  S('sb_collapse', 'Sidebar', 'Sidebar collapse', 'click Close sidebar', clk(ab('Close sidebar'))),
+  S('sb_expand', 'Sidebar', 'Sidebar expand', 'click Open sidebar', async (p) => { const l = L(p, 'button[aria-label="Open sidebar"], button[data-track-owner*="SidebarTrigger"]'); await l.click(); return l; }, { setup: async (p) => { await L(p, ab('Close sidebar')).click(); } }),
+  S('sb_search', 'Sidebar', 'Search opens', 'click Search', clk(ab('Search'))),
+  S('sb_search_close', 'Sidebar', 'Search closes', 'press Escape', key('Escape'), { setup: async (p) => { await L(p, ab('Search')).click(); } }),
+  S('sb_new_captain', 'Sidebar', 'New Captain dialog opens', 'click New Captain', clk(ab('New Captain'))),
+  S('sb_new_captain_close', 'Sidebar', 'New Captain dialog closes', 'press Escape', key('Escape'), { setup: async (p) => { await L(p, ab('New Captain')).click(); } }),
+  S('sb_captain_options', 'Sidebar', 'Captain options menu opens', 'click Captain options', clk(ab('Captain options'))),
+  S('sb_thread_options', 'Sidebar', 'Thread options menu opens', 'click Thread options', clk(ab('Thread options'))),
+  S('sb_menu_close', 'Sidebar', 'Menu closes', 'press Escape', key('Escape'), { setup: async (p) => { await L(p, ab('Thread options')).click(); } }),
+  S('sb_menu_item_hover', 'Sidebar', 'Menu item highlight', 'pointer moves over a menu item', hov('[role=menuitem]:nth-of-type(2), [data-slot=menu-item]:nth-of-type(2)'), { setup: async (p) => { await L(p, ab('Thread options')).click(); } }),
+  S('sb_pinned_ctx', 'Sidebar', 'Pinned captain context menu', 'right-click a pinned tile', rcl('[data-captain-row]')),
+  S('sb_row_ctx', 'Sidebar', 'Captain row context menu (pin)', 'right-click a captain row', async (p) => { const l = p.getByText('CAPTAIN ROW NAME', { exact: true }).first(); await l.click({ button: 'right' }); return l; }),
+  S('sb_thread_ctx', 'Sidebar', 'Thread row context menu', 'right-click a thread row', async (p) => { const l = p.locator('a[href^="/thread/"]').nth(4); await l.click({ button: 'right' }); return l; }),
+  S('sb_automations', 'Sidebar', 'Automations group expands', 'click Automations', async (p) => { const l = p.locator('button:has-text("Automations")').first(); await l.click(); return l; }),
+  S('sb_user_menu', 'Sidebar', 'User menu opens', 'click the workspace avatar', clk(USER)),
+  S('sb_dock_hover', 'Sidebar', 'Dock link hover and tooltip', 'pointer rests on a dock icon', hov('a[href="/issues"]'), { wait: 1100 }),
+  S('sb_icon_tooltip', 'Sidebar', 'Icon button tooltip', 'pointer rests on New thread', hov(ab('New thread')), { wait: 1100 }),
+  S('sb_rail_hover', 'Sidebar', 'Resize rail hover', 'pointer enters the sidebar edge', hov(ab('Resize sidebar'))),
+  S('cmdk_open', 'Sidebar', 'Command menu opens', 'press Ctrl+K', key('Control+k')),
+  // Composer
+  S('cmp_focus', 'Composer', 'Composer focus', 'click into the editor', clk('[contenteditable="true"]')),
+  S('cmp_type', 'Composer', 'Typing enables send', 'type a character', async (p) => { await p.keyboard.type('Hello'); return L(p, '[data-slot="composer"]'); }, { setup: async (p) => { await L(p, '[contenteditable="true"]').click(); } }),
+  S('cmp_project', 'Composer', 'Project picker opens', 'click Project', clk(ab('Project'))),
+  S('cmp_machine', 'Composer', 'Machine picker opens', 'click Machine', clk(ab('Machine'))),
+  S('cmp_branch', 'Composer', 'Branch picker opens', 'click Branch', clk(ab('Branch'))),
+  S('cmp_add', 'Composer', 'Add to message menu opens', 'click +', clk(ab('Add to message'))),
+  S('cmp_config', 'Composer', 'Thread configuration opens', 'click Thread configuration', clk(ab('Thread configuration'))),
+  S('cmp_model', 'Composer', 'Model picker opens', 'click Model', clk(ab('Model'))),
+  S('cmp_model_close', 'Composer', 'Model picker closes', 'press Escape', key('Escape'), { setup: async (p) => { await L(p, ab('Model')).click(); } }),
+  S('cmp_model_row', 'Composer', 'Model row highlight', 'pointer moves over a model', async (p) => { const l = p.locator('[role=option], [role=menuitemradio], [data-slot=menu-row], [role=menuitem]').nth(3); await l.hover(); return l; }, { setup: async (p) => { await L(p, ab('Model')).click(); } }),
+  S('cmp_slash', 'Composer', 'Slash command menu opens', 'type /', async (p) => { await p.keyboard.type('/'); return L(p, '[data-slot="composer"]'); }, { setup: async (p) => { await L(p, '[contenteditable="true"]').click(); } }),
+  S('cmp_mention', 'Composer', 'Mention menu opens', 'type @', async (p) => { await p.keyboard.type('@'); return L(p, '[data-slot="composer"]'); }, { setup: async (p) => { await L(p, '[contenteditable="true"]').click(); } }),
+  S('cmp_voice_hover', 'Composer', 'Voice button hover', 'pointer enters Voice input', hov(ab('Voice input'))),
+  S('cmp_chip_hover', 'Composer', 'Footer chip hover', 'pointer enters the Project chip', hov(ab('Project'))),
+  // Thread
+  T('th_worklog_open', 'Work log expands', 'click the Worked for… line', async (p) => { const l = p.locator(`${chat} [data-slot="activity-line"] button`).last(); await l.click(); return l; }),
+  T('th_worklog_close', 'Work log collapses', 'click the Worked for… line again', async (p) => { const l = p.locator(`${chat} [data-slot="activity-line"] button`).last(); await l.click(); return l; }, { setup: async (p) => { await goThread(p); await p.locator(`${chat} [data-slot="activity-line"] button`).last().click(); } }),
+  T('th_step_open', 'Work log step expands', 'click a step', async (p) => { const l = p.locator(`${chat} [data-slot="collapsible"] [role=button], ${chat} [data-slot="collapsible-trigger"]`).first(); await l.click(); return l; }, { setup: async (p) => { await goThread(p); await p.locator(`${chat} [data-slot="activity-line"] button`).last().click(); } }),
+  T('th_user_hover', 'User message hover actions', 'pointer enters a user message', hov(`${chat} [data-slot="user-message"]`)),
+  T('th_agent_hover', 'Agent message section rail', 'pointer enters an agent message', async (p) => { const l = p.locator(`${chat} [data-slot="message-section"]`).last(); await l.hover(); return l; }),
+  T('th_copy', 'Copy message feedback', 'click Copy message', async (p) => { const l = p.locator(`${chat} button[aria-label="Copy message"]`).last(); await l.click(); return l; }, { setup: async (p) => { await goThread(p); await p.locator(`${chat} [data-slot="message-footer"]`).last().hover(); } }),
+  T('th_more', 'Message More menu opens', 'click More', async (p) => { const l = p.locator(`${chat} button[aria-label="More"]`).last(); await l.click(); return l; }, { setup: async (p) => { await goThread(p); await p.locator(`${chat} [data-slot="message-section"]`).last().hover(); } }),
+  T('th_chip_preview', 'Chip preview card', 'pointer rests on a thread chip', async (p) => { const l = p.locator(`${chat} [data-slot="preview-card-trigger"]`).last(); await l.hover(); return l; }, { wait: 1100 }),
+  T('th_link_hover', 'Link underline on hover', 'pointer enters a link', async (p) => { const l = p.locator(`${chat} [data-component="markdown"] a`).last(); await l.hover(); return l; }),
+  T('th_open_tab', 'Open a tab menu', 'click +', clk(ab('Open a tab'))),
+  T('th_tab_hover', 'Tab hover reveals close', 'pointer enters a tab', hov('[data-pane-tab="overview"]')),
+  T('th_tab_switch', 'Tab switch', 'click the Issues tab', clk('[data-pane-tab="captain_issues"]')),
+  T('th_tab_ctx', 'Tab context menu', 'right-click a tab', rcl('[data-pane-tab="overview"]')),
+  T('th_cost', 'Cost breakdown opens', 'click the cost badge', clk('button[aria-label^="Thread cost"]')),
+  T('th_context', 'Context meter opens', 'click the token budget', clk('button[aria-label*="token budget"]')),
+  T('th_expand', 'Pane expands', 'click Expand pane', clk(ab('Expand pane'))),
+  T('th_pane_close', 'Pane closes', 'click Close pane', clk(ab('Close pane'))),
+  T('th_pr_sort', 'Sort menu opens', 'click Sort pull requests', clk(ab('Sort pull requests'))),
+  T('th_pr_hover', 'Pull request row hover and preview', 'pointer rests on a pull request row', hov('button:has-text("PR-ROW-TEXT")'), { wait: 1100 }),
+  T('th_section_toggle', 'Overview section collapses', 'click a section header', async (p) => { const l = p.locator('button:has-text("Subagents")').first(); await l.click(); return l; }),
+  T('th_divider_hover', 'Pane divider hover', 'pointer enters the divider', hov(ab('Resize panes side by side'))),
+  T('th_scroll_pill', 'Scroll-to-end pill appears', 'scroll the transcript up', async (p) => { await p.mouse.move(600, 500); await p.mouse.wheel(0, -2600); return L(p, ab('Scroll to end')); }, { wait: 500 }),
+  T('th_model', 'Model picker opens in a thread', 'click Model', clk(ab('Model'))),
+  T('th_machine', 'Machine menu opens', 'click Machine', clk(ab('Machine'))),
+  T('th_preview_hover', 'Attachment card hover', 'pointer enters a preview card', async (p) => { const l = p.locator(`${chat} button[aria-label^="Preview"]`).last(); await l.hover(); return l; }),
+  T('th_lightbox', 'Lightbox opens', 'click an attachment', async (p) => { const l = p.locator(`${chat} button[aria-label^="Preview"]`).last(); await l.click(); return l; }),
+  // Routes and settings
+  S('rt_settings_nav_hover', 'Pages', 'Settings nav hover', 'pointer enters a nav row', hov('a[href="/settings/models"]'), { url: '/settings/general' }),
+  S('rt_settings_nav', 'Pages', 'Settings page change', 'click Appearance', clk('a[href="/settings/appearance"]'), { url: '/settings/general', wait: 500 }),
+  S('rt_settings_select', 'Pages', 'Select menu opens', 'click a select', async (p) => { const l = p.locator('main button:has-text("System default"), button:has-text("System default")').first(); await l.click(); return l; }, { url: '/settings/general' }),
+  S('rt_settings_row_hover', 'Pages', 'Settings row hover', 'pointer enters a row', hov('main [data-track-owner*="SettingsRow"], main a[data-track-owner*="SettingsRowLink"]'), { url: '/settings/projects' }),
+  S('rt_explore_card', 'Pages', 'Explore card hover', 'pointer enters a listing', hov('main a[href^="/explore/"]'), { url: '/explore' }),
+  S('rt_explore_tab', 'Pages', 'Explore tab change', 'click Skills', async (p) => { const l = p.locator('main a:has-text("Skills"), main button:has-text("Skills")').first(); await l.click(); return l; }, { url: '/explore', wait: 500 }),
+  S('rt_drive_row', 'Pages', 'Drive row hover', 'pointer enters a file row', hov('main a[href^="/drive/"], main [role=row]:nth-of-type(3)'), { url: '/drive' }),
+  S('rt_issues_row', 'Pages', 'Issue row hover', 'pointer enters an issue row', hov('main a[href^="/issues/"]'), { url: '/issues' }),
+  S('rt_issues_filter', 'Pages', 'Issues filter menu', 'click Filter', clk('button[aria-label^="Filter"]'), { url: '/issues' }),
+  S('rt_pulls_row', 'Pages', 'Pull request row hover', 'pointer enters a pull request row', hov('main a[href^="/pulls/"], main [role=row]:nth-of-type(3)'), { url: '/pulls' }),
+  S('rt_pulls_filter', 'Pages', 'Pull requests filter menu', 'click Filter', clk('button[aria-label^="Filter"]'), { url: '/pulls' }),
+  S('rt_threads_display', 'Pages', 'Display options menu', 'click Display options', clk(ab('Display options')), { url: '/threads' }),
+  S('rt_threads_filter', 'Pages', 'Threads filter menu', 'click Filter threads', clk(ab('Filter threads')), { url: '/threads' }),
+  S('rt_threads_row', 'Pages', 'Threads list row hover', 'pointer enters a row', hov('main a[href^="/thread/"]'), { url: '/threads' }),
+  S('rt_auto_template', 'Pages', 'Automation template hover', 'pointer enters a template', hov('main a[href*="template"], main [data-track-owner*="TemplatesSection"]'), { url: '/automations' }),
+  S('rt_route_change', 'Pages', 'Route change', 'click Issues in the dock', clk('a[href="/issues"]'), { wait: 500 }),
+];

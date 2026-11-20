@@ -1,0 +1,8 @@
+node_modules/
+__pycache__/
+*.pyc
+# never commit credentials or captured account data
+cookies*.json
+*.cookies.json
+.env
+work/

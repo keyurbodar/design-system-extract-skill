@@ -1,0 +1,2 @@
+const pages = ['general','appearance','profile','security','referrals','experiments','notifications','shortcuts','models','projects','mcp','integrations','api','devices','instructions','skills','threads','git','review/repositories','review/agent-config','org/general','org/identity','org/issue-states','org/members','org/billing','org/usage','org/activity','org/audit-log'];
+export default pages.map(s => ({ key: 'set_' + s.replace(/\W+/g, '_'), group: 'settings', name: 'Live · Settings · ' + s.replace('/', ' / '), url: '/settings/' + s, settle: 5500 }));
